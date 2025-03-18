@@ -155,7 +155,6 @@ class LLM_Disambiguator(Disambiguator, disambiguator_name='llm'):
                     | debug
                 )
 
-                # sentence = self.sentence_term_template.format(term=label)
                 sentence = self.sentence_term_template
                 entity_id = await chain.ainvoke(
                     {
