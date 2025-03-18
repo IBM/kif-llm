@@ -65,7 +65,7 @@ Fill in the gap to complete the relation:
 '''
 
 
-class EntityResolutionMethod(StrEnum):
+class EntityLinkingMethod(StrEnum):
     KEYWORD = auto()
     NAIVE = auto()
     LLM = auto()

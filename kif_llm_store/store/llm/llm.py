@@ -40,7 +40,7 @@ from kif_lib.model.fingerprint import (
     ValueFingerprint,
 )
 
-from .entity_resolution import EntitySource
+from .entity_linking import EntitySource
 
 from .language_models import BaseChatModel
 from .output_parsers import (
@@ -63,7 +63,7 @@ from ..llm.constants import (
     DEFAULT_SYSTEM_PROMPT_INSTRUCTION,
     SYSTEM_PROMPT_INSTRUCTION_WITH_CONTEXT,
     SYSTEM_PROMPT_INSTRUCTION_WITH_ENFORCED_CONTEXT,
-    EntityResolutionMethod,
+    EntityLinkingMethod,
     KIF_FilterTypes,
     LLM_Providers,
 )
@@ -123,9 +123,9 @@ class LLM_Store(
       parser: A parser instance (it accepts an instance of a LangChain BaseOutputParser).
       textual_context: Text to In-Context Prompting.
       examples: A list of PromptExamples to be used as FewShot examples.
-      entity_resolution_method: The identifier of an Entity Resolution method to be used, such as `llm`
+      entity_linking_method: The identifier of an Entity Linking method to be used, such as `llm`
         for LLM-based method.
-      model_for_entity_resolution: If the `entity_resolution_method` used is LLM-based than this parameter
+      model_for_entity_resolution: If the `entity_linking_method` used is LLM-based than this parameter
         may be used to indicate the LLM mode to use (it accepts an intance of a LangChain BaseChatModel).
       target_store: Target Store
       entity_source: Target Store
@@ -140,7 +140,7 @@ class LLM_Store(
         '_parser',
         '_textual_context',
         '_examples',
-        '_entity_resolution_method',
+        '_entity_linking_method',
         '_model_for_entity_resolution',
         '_target_store',
         '_entity_source',
@@ -155,7 +155,7 @@ class LLM_Store(
     _task_prompt_template: Optional[str]
     _parser: Optional[BaseOutputParser]
     _textual_context: Optional[str]
-    _entity_resolution_method: Optional[EntityResolutionMethod]
+    _entity_linking_method: Optional[EntityLinkingMethod]
     _target_store: Optional[Store]
     _entity_source: Optional[EntitySource]
     _model_for_entity_resolution: Optional[BaseChatModel]
@@ -176,7 +176,7 @@ class LLM_Store(
         parser: Optional[BaseOutputParser] = None,
         textual_context: Optional[str] = None,
         examples: Optional[List[PromptExample]] = None,
-        entity_resolution_method: Optional[EntityResolutionMethod] = None,
+        entity_linking_method: Optional[EntityLinkingMethod] = None,
         model_for_entity_resolution: Optional[BaseChatModel] = None,
         target_store: Optional[Store] = None,
         entity_source: Optional[EntitySource] = None,
@@ -210,8 +210,8 @@ class LLM_Store(
         self._model_for_entity_resolution = (
             model_for_entity_resolution or self._model
         )
-        self._entity_resolution_method = (
-            entity_resolution_method or EntityResolutionMethod.NAIVE
+        self._entity_linking_method = (
+            entity_linking_method or EntityLinkingMethod.NAIVE
         )
 
         self._task_prompt_template = task_prompt_template
@@ -239,7 +239,7 @@ class LLM_Store(
         model_id: str,
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
-        entity_resolution_method: Optional[EntityResolutionMethod] = None,
+        entity_linking_method: Optional[EntityLinkingMethod] = None,
         *args,
         **model_kwargs: Any,
     ):
@@ -254,7 +254,7 @@ class LLM_Store(
         return cls(
             store_name="llm",
             model=model,
-            entity_resolution_method=entity_resolution_method,
+            entity_linking_method=entity_linking_method,
             *args,
             **model_kwargs,
         )
@@ -362,12 +362,12 @@ class LLM_Store(
         self._parser = value
 
     @property
-    def entity_resolution_method(self) -> EntityResolutionMethod:
-        return self._entity_resolution_method
+    def entity_linking_method(self) -> EntityLinkingMethod:
+        return self._entity_linking_method
 
-    @entity_resolution_method.setter
-    def entity_resolution_method(self, value: EntityResolutionMethod) -> None:
-        self._entity_resolution_method = value
+    @entity_linking_method.setter
+    def entity_linking_method(self, value: EntityLinkingMethod) -> None:
+        self._entity_linking_method = value
 
     @property
     def enforce_context(self) -> bool:
@@ -610,7 +610,7 @@ class LLM_Store(
         """
         binds = self._compiler.get_binds()
 
-        from ..llm.entity_resolution.disambiguators import (
+        from ..llm.entity_linking.disambiguators import (
             Disambiguator,
             NaiveDisambiguator,
             LLM_Disambiguator,
@@ -619,7 +619,7 @@ class LLM_Store(
         disambiguator: Disambiguator = Disambiguator(
             NaiveDisambiguator.disambiguator_name, source=self._entity_source
         )
-        if self.entity_resolution_method == EntityResolutionMethod.LLM:
+        if self.entity_linking_method == EntityLinkingMethod.LLM:
             if (
                 self._compiler.get_filter_type()
                 == KIF_FilterTypes.ONE_VARIABLE
