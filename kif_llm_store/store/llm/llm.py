@@ -8,11 +8,9 @@ from typing import List, Dict
 import importlib.util
 
 from kif_lib import (
-    Descriptor,
     Entity,
     Filter,
     Item,
-    ItemDescriptor,
     Property,
     QuantityDatatype,
     TimeDatatype,
@@ -31,7 +29,6 @@ from kif_lib.typing import (
     Iterable,
     Iterator,
     Optional,
-    Union,
     override,
 )
 
@@ -227,7 +224,7 @@ class LLM_Store(
         )
         self._create_entity = create_entity
 
-        self._target_store = target_store or Store("wikidata")
+        self._target_store = target_store or Store("wikidata-sparql")
 
         # TODO: send the methods from EntitySource to Store
         self._entity_source = entity_source or EntitySource('wikidata')
@@ -417,27 +414,31 @@ class LLM_Store(
 
     @override
     def _filter(
-        self, filter: Filter, limit: int, distinct: bool, annotated: bool
+        self,
+        filter: Filter,
+        options: Store.Options
     ) -> Iterator[Statement]:
-        assert limit > 0, (
-            "Invalid limit value. Please, provide a limit " "bigger than 0."
-        )
-
         async def sync_wrapper() -> List[Statement]:
             results = []
-            async for stmt in self.afilter(filter, limit, distinct, annotated):
+            async for stmt in self._afilter(filter, options):
                 results.append(stmt)
             return results
 
         return iter(asyncio.run(sync_wrapper()))
 
-    async def afilter(
-        self, filter: Filter, limit: int, distinct: bool, annotated: bool
+    @override
+    def _afilter(
+        self,
+        filter: Filter,
+        options: Store.Options
     ) -> AsyncIterator[Statement]:
-        assert (
-            limit > 0
-        ), 'Invalid limit value. Please, provide a limit bigger than 0.'
+        return self._afilter_async(filter, options)
 
+    async def _afilter_async(
+        self,
+        filter: Filter,
+        options: Store.Options
+    ) -> AsyncIterator[Statement]:
         assert (
             filter.property
         ), 'LLM Store can not handle filters with undefined property yet.'
@@ -451,8 +452,8 @@ class LLM_Store(
         if isinstance(s, OrFingerprint):
             for sub_filter in s:
                 new_filter = Filter(sub_filter, filter.property, filter.value)
-                async for result in self.afilter(
-                    new_filter, limit, distinct, annotated
+                async for result in self._afilter(
+                    new_filter, options
                 ):
                     yield result
         elif isinstance(v, OrFingerprint):
@@ -460,15 +461,15 @@ class LLM_Store(
                 new_filter = Filter(
                     filter.subject, filter.property, sub_filter
                 )
-                async for result in self.afilter(
-                    new_filter, limit, distinct, annotated
+                async for result in self._afilter(
+                    new_filter, options
                 ):
                     yield result
         elif isinstance(p, OrFingerprint):
             for sub_filter in p:
                 new_filter = Filter(filter.subject, sub_filter, filter.value)
-                async for result in self.afilter(
-                    new_filter, limit, distinct, annotated
+                async for result in self._afilter(
+                    new_filter, options
                 ):
                     yield result
         else:
@@ -493,7 +494,7 @@ class LLM_Store(
                         self._parser.get_format_instructions()
                     )
 
-            self._compiler = self._compile_filter(filter, annotated)
+            self._compiler = self._compile_filter(filter)
             query = self._compiler.query_template
 
             if self.examples:
@@ -510,7 +511,7 @@ class LLM_Store(
                     'var1', replacement
                 )
 
-            chain = self._create_pipline_chain(limit=limit, distinct=distinct)
+            chain = self._create_pipline_chain(options)
 
             try:
                 async for statement in await chain.ainvoke(
@@ -530,29 +531,24 @@ class LLM_Store(
     )
 
     def _compile_filter(
-        self, filter: Filter, annotated: bool
+        self, filter: Filter
     ) -> LLM_FilterCompiler:
         compiler = LLM_FilterCompiler(filter, self._compile_filter_flags)
 
-        if self.has_flags(self.DEBUG):
-            compiler.set_flags(compiler.DEBUG)
-        else:
-            compiler.unset_flags(compiler.DEBUG)
-
         compiler.compile(
-            self.target_store, annotated, self.task_prompt_template
+            self.target_store, filter.annotated, self.task_prompt_template
         )
         return compiler
 
     def _create_pipline_chain(
-        self, limit: int, distinct=True
+        self, options: Store.Options
     ) -> RunnableSequence:
         from langchain_core.runnables import RunnableLambda
 
         def distinct_fn(labels: List[str]) -> List[str]:
-            if distinct:
+            if options.distinct:
                 labels = list(set(labels))
-            return labels[:limit]
+            return labels[:options.limit]
 
         debug_chain = RunnableLambda(lambda entry: (LOG.info(entry), entry)[1])
 
@@ -758,15 +754,6 @@ class LLM_Store(
         self, stmts: Iterable[Statement]
     ) -> Iterator[tuple[Statement, Optional[set[Statement.Annotation]]]]:
         return self._target_store.get_annotations(stmts)
-
-    @override
-    def _get_item_descriptor(
-        self,
-        items: Union[Item, Iterable[Item]],
-        language: Optional[str] = None,
-        mask: Optional[Descriptor.TAttributeMask] = None,
-    ) -> Iterator[tuple[Item, Optional[ItemDescriptor]]]:
-        return self._target_store.get_item_descriptor(items, language, mask)
 
     def _build_prompt_template(self) -> ChatPromptTemplate:
         from langchain_core.messages import SystemMessage

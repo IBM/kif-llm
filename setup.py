@@ -25,7 +25,7 @@ setup(
     install_requires=[
         'aiofiles',
         'httpx',
-        'kif-lib==0.8.*',
+        'kif-lib==0.9.*',
         'langchain==0.3.4',
         'nest-asyncio==1.6.0',
         'python-dotenv==1.0.1',
