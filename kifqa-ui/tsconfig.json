@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "types": ["node", "vite/client"],
+    "target": "ESNext",        // Modern JS output
+    "module": "ESNext",        // Needed for import.meta.env
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "moduleResolution": "Node",
+    "strict": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "baseUrl": "src",
+    "paths": {
+        "@assets/*": ["assets/*"],
+        "@components/*": ["components/*"],
+        "@features/*": ["features/*"],
+        "@hooks/*": ["hooks/*"],
+        "@layouts/*": ["layouts/*"],
+        "@pages/*": ["pages/*"],
+        "@services/*": ["services/*"],
+        "@store/*": ["store/*"],
+    }
+  }
+}

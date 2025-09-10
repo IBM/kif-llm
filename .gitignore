@@ -3,8 +3,12 @@
 .DS_Store
 .env
 __pycache__
-kif-llm-store
+kif-llm
 .vscode
+.venv
+**.internal*
 venv
 kbc
 _ctxgen
+data
+dist

@@ -12,7 +12,7 @@ try:
     from sentence_transformers import SentenceTransformer
 except ImportError as err:
     raise ImportError(
-        f'{__name__} requires SentenceTransformer') from err
+        f'{__name__} requires sentence_transformers') from err
 
 try:
     from sklearn.metrics.pairwise import (cosine_similarity,

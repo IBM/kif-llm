@@ -1,0 +1,30 @@
+[project]
+name = "kif-llm-store"
+version = "0.1.0"
+description = "A Wikidata-view over Large Language Models."
+authors = [
+    {name = "Marcelo Machado",email = "mmachado@ibm.com"}
+]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.poetry.dependencies]
+langchain = ">=0.3.27,<0.4.0"
+aiofiles = ">=24.1.0,<25.0.0"
+types-aiofiles = ">=24.1.0.20250822,<25.0.0.0"
+nest-asyncio = ">=1.6.0,<2.0.0"
+httpx = ">=0.28.1,<0.29.0",
+tenacity = ">=9.1.2,<10.0.0"
+kif-lib = { git = "https://github.com/IBM/kif.git" }
+kbel = { git = "https://github.com/IBM/kif-llm.git", branch = "dev", subdirectory = "kbel" }
+
+[tool.poetry]
+
+[tool.poetry.group.dev.dependencies]
+python-dotenv = "^1.1.1"
+isort = "^6.0.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
