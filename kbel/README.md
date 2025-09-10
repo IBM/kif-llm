@@ -19,6 +19,10 @@ It is **extensible**: Easily implement new disambiguation methods by subclassing
 
 ## Quickstart
 
+```python
+from kbel.disambiguators import Disambiguator
+```
+
 ### Simple Disambiguator
 
 ```python
@@ -30,19 +34,21 @@ label = "Python"
 
 # Using KIF Wikidata Searcher
 searcher = Search('wikidata-wapi', limit=10)
-disambiguator = SimpleDisambiguator('simple')
+disambiguator = Disambiguator('simple')
 
 results = disambiguator.disambiguate_item(label, searcher)
-print(results)
+for result in results:
+    print (result)
 ```
 
 ### Similarity Disambiguator
 ```python
 from kbel.disambiguators.similarity import SimilarityDisambiguator
 
-disambiguator = SimilarityDisambiguator('sim')
+disambiguator = Disambiguator('sim')
 results = disambiguator.disambiguate_item(label, searcher, limit=1, sentence="Python is used for coding")
-print(results)
+for result in results:
+    print (result)
 ```
 
 ### LLM Disambiguator
@@ -51,8 +57,8 @@ print(results)
 from kbel.disambiguators.llm import LLM_Disambiguator
 
 # Using ChatGPT models
-disambiguator = LLM_Disambiguator(
-    disambiguator_name='llm',
+disambiguator = Disambiguator(
+    'llm',
     model_name='gpt-4',
     model_provider='openai',
     model_apikey='YOUR_API_KEY',
@@ -63,7 +69,8 @@ disambiguator = LLM_Disambiguator(
 searcher = Search('dbpedia', limit=10)
 
 results = disambiguator.disambiguate_item(label, searcher, sentence="Python is used for coding")
-print(results)
+for result in results:
+    print (result)
 ```
 
 or
@@ -74,17 +81,18 @@ from kbel.disambiguators.llm import LLM_Disambiguator
 # Using a LangChain model. For instance, IBM WatsonX
 model = ChatWatsonx(
     model_id='meta-llama/llama-3-3-70b-instruct',
-    apikey=YOUR_API_KEY, # type: ignore
-    url='YOUR_LLM_API_ENDPOINT', # type: ignore
+    apikey=YOUR_API_KEY,
+    url='YOUR_LLM_API_ENDPOINT',
     project_id='YOUR_WATSONX_PROJECT_ID',
 )
-disambiguator = LLM_Disambiguator(disambiguator_name='llm', model=model)
+disambiguator = Disambiguator('llm', model=model)
 
 # Using KIF DBPedia Searcher
 searcher = Search('dbpedia', limit=10)
 
 results = disambiguator.disambiguate_item(label, searcher, sentence="Python is used for coding")
-print(results)
+for result in results:
+    print (result)
 ```
 
 ## License

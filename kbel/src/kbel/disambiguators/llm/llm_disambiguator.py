@@ -49,8 +49,6 @@ class LLM_Disambiguator(Disambiguator, disambiguator_name='llm'):
         model_params: dict[str, Any] = {},
         model_apikey: Optional[str] = None,
         model_endpoint: Optional[str] = None,
-        *args,
-        **kwargs,
     ):
         """Initializes the LLM_Disambiguator.
 
@@ -69,7 +67,7 @@ class LLM_Disambiguator(Disambiguator, disambiguator_name='llm'):
             **kwargs: Additional keyword arguments for the base Disambiguator.
         """
         assert disambiguator_name == self.disambiguator_name
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
         if model:
             self._model = model
@@ -185,7 +183,7 @@ Output:""")
             from langchain_core.runnables import RunnableLambda
 
             debug = RunnableLambda(lambda entry:
-                                    (LOG.info(entry), entry)[1])
+                                    (LOG.debug(entry), entry)[1])
 
             parser = CommaSeparatedListOutputParserSet()
             chain = (promp_template
