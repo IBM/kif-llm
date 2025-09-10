@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from kif_lib import Store
+from kif_lib import Fingerprint, Store
 from kif_lib.model import Filter, Entity
 from kif_lib.model.fingerprint import (
     AndFingerprint,
@@ -19,6 +19,7 @@ from kif_lib.typing import (
     override,
     Self,
     Optional,
+    Union,
 )
 
 from typing import Dict, List
@@ -260,7 +261,7 @@ class LLM_FilterCompiler(LLM_Compiler):
         pv = filter.value
         where = []
 
-        def compile(filter, var_count=0):
+        def compile(filter: Fingerprint, var_count=0):
             where = ''
             if isinstance(filter, FullFingerprint):
                 var_count += 1
@@ -329,23 +330,35 @@ class LLM_FilterCompiler(LLM_Compiler):
             where.append(vw)
 
         def build_task_prompt_template(
-            entity, query_template, replacement
+            entity: Union[Entity, Variable, OrComponent, AndComponent],
+            query_template: str,
+            replacement: str,
         ) -> str:
             value_template = entity
             if isinstance(entity, Variable):
-                value_template = entity.get_name()
+                value_template = value_template.get_name()
                 return query_template.replace(replacement, value_template)
             if isinstance(value_template, Entity):
-                value_template = entity.label.content
+                assert (
+                    value_template.label
+                ), f'It was not possible to get the label for the entity `{entity}`'
+                value_template = value_template.label.content
             elif isinstance(value_template, OrComponent):
                 labels = []
                 for component in value_template.components:
+                    assert (
+                        component.label
+                    ), f'It was not possible to get the label for the entity `{component}`'
+
                     entity_label = component.label.content
                     labels.append(entity_label)
                 value_template = ' or '.join(labels)
             elif isinstance(value_template, AndComponent):
                 labels = []
                 for component in value_template.components:
+                    assert (
+                        component.label
+                    ), f'It was not possible to get the label for the entity `{component}`'
                     entity_label = component.label.content
                     labels.append(entity_label)
                 value_template = ' and '.join(labels)

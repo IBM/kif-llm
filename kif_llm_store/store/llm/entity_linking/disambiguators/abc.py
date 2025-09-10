@@ -107,7 +107,10 @@ class Disambiguator:
         async for label, entity in self.__adisambiguate(
             labels, limit, self._disambiguate, *args, **kwargs
         ):
-            yield label, cls(iri=entity)
+            if entity:
+                yield label, cls(iri=entity)
+            else:
+                yield label, None
 
     def disambiguate(
         self,
