@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, TYPE_CHECKING
 
-from langchain_core.language_models import BaseChatModel
+
+if TYPE_CHECKING:
+    from langchain_core.language_models import BaseChatModel
 
 
 def build_model(
@@ -21,7 +23,12 @@ def build_model(
     if provider == 'ibm':
         if project_id:=kwargs.get('project_id'):
             kwargs.__delitem__('project_id')
-            from langchain_ibm import ChatWatsonx
+
+            try:
+                from langchain_ibm import ChatWatsonx
+            except ImportError as err:
+                raise ImportError(
+                    f'{__name__} requires langchain_ibm') from err
             return ChatWatsonx(
                 model_id=model_name,
                 apikey=apikey, # type: ignore
@@ -31,11 +38,27 @@ def build_model(
             )
         raise ValueError(f'Project ID not found while initializing IBM models.')
     elif provider == 'openai':
-        from langchain_openai import ChatOpenAI
+        try:
+            from langchain_openai import ChatOpenAI
+        except ImportError as err:
+            raise ImportError(
+                f'{__name__} requires langchain_openai') from err
         return ChatOpenAI(
             model=model_name,
             api_key=apikey, # type: ignore
             base_url=endpoint, # type: ignore
-            params=kwargs)
+            **kwargs)
+    elif provider == 'ollama':
+        try:
+            from langchain_ollama import ChatOllama
+        except ImportError as err:
+            raise ImportError(
+                f'{__name__} requires langchain_ollama') from err
+
+        return ChatOllama(
+            model=model_name,
+            base_url=endpoint,
+            params=kwargs,
+        )
 
     raise ValueError(f'Could not initialize `{provider}` not exist.')

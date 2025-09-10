@@ -80,7 +80,7 @@ class Disambiguator:
         self,
         label: str,
         searcher: Search,
-        limit = 10,
+        limit = 100,
         language = 'en',
         *args: Any,
         **kwargs: Any) -> list[Tuple[str, str, Item]]:
@@ -101,7 +101,7 @@ class Disambiguator:
         self,
         label: str,
         searcher: Search,
-        limit = 10,
+        limit = 100,
         language = 'en',
         *args: Any,
         **kwargs: Any) -> list[Tuple[str, str, Property]]:
